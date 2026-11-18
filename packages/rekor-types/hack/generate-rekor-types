@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+set -ex
+
+# Check-out Rekor repo (v1.3.6)
+REF=a6788566cd62facb0fb0450e9d2c2867f551e37c
+REKOR_DIR=/tmp/rekor
+
+rm -rf ${REKOR_DIR}
+git clone https://github.com/sigstore/rekor.git ${REKOR_DIR}
+pushd ${REKOR_DIR}
+git checkout ${REF}
+popd
+
+# Run codegen against openapi spec to get top-level types
+npx openapi --input "${REKOR_DIR}/openapi.yaml" \
+  --output "src/__generated__" \
+  --useOptions \
+  --useUnionTypes \
+  --exportCore=false \
+  --exportServices=false \
+  --exportSchemas=false
+
+# Run json2ts on schemas
+KINDS=( dsse intoto hashedrekord )
+for KIND in "${KINDS[@]}"
+do
+  TYPE_PATH=${REKOR_DIR}/pkg/types/${KIND}
+  npx json2ts --input ${TYPE_PATH}/${KIND}_schema.json \
+    --cwd ${TYPE_PATH} \
+    --output src/__generated__/${KIND}.ts \
+    --no-additionalProperties
+done
+

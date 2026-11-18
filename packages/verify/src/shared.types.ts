@@ -1,0 +1,98 @@
+/*
+Copyright 2023 The Sigstore Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+import type { TransparencyLogEntry } from '@sigstore/bundle';
+import type { RFC3161Timestamp, X509Certificate, crypto } from '@sigstore/core';
+import type { ObjectIdentifierValuePair } from '@sigstore/protobuf-specs';
+
+export type CertificateExtensionName = 'issuer';
+export type CertificateExtensions = {
+  [key in CertificateExtensionName]?: string;
+};
+
+export type CertificateIdentity = {
+  // The expected SAN value for the signing certificate, matched as a
+  // JavaScript regular expression against the certificate's SAN. For exact
+  // matching, use an anchored pattern (e.g. '^user@example\\.com$').
+  subjectAlternativeName?: string;
+  extensions?: CertificateExtensions;
+  oids?: ObjectIdentifierValuePair[];
+};
+
+export type VerificationPolicy = {
+  subjectAlternativeName?: string | RegExp;
+  extensions?: CertificateExtensions;
+  oids?: ObjectIdentifierValuePair[];
+};
+
+export type Signer = {
+  key: crypto.KeyObject;
+  identity?: CertificateIdentity;
+};
+
+export type Timestamp =
+  | {
+      $case: 'timestamp-authority';
+      timestamp: RFC3161Timestamp;
+    }
+  | {
+      $case: 'transparency-log';
+      tlogEntry: TransparencyLogEntry;
+    };
+
+export type VerificationKey =
+  | {
+      $case: 'public-key';
+      hint: string;
+    }
+  | {
+      $case: 'certificate';
+      certificate: X509Certificate;
+    };
+
+export type SignatureContent = {
+  signature: Buffer;
+  compareSignature(signature: Buffer): boolean;
+  // Compares the given digest against the digest of the artifact's payload.
+  // For a DSSE envelope this is the digest of the envelope payload.
+  compareDigest(digest: Buffer): boolean;
+  // Compares the given digest against the digest of the bytes that the
+  // signature actually covers. For a message signature this is the digest of
+  // the artifact; for a DSSE envelope this is the digest of the pre-authentication
+  // encoding (PAE). Used when verifying hashedrekord tlog entries.
+  compareSignedDigest(digest: Buffer): boolean;
+  verifySignature(key: crypto.KeyObject): boolean;
+};
+
+export type TimestampProvider = {
+  timestamps: Timestamp[];
+};
+
+export type SignatureProvider = {
+  signature: SignatureContent;
+};
+
+export type KeyProvider = {
+  key: VerificationKey;
+};
+
+export type TLogEntryProvider = {
+  tlogEntries: TransparencyLogEntry[];
+};
+
+export type SignedEntity = SignatureProvider &
+  KeyProvider &
+  TimestampProvider &
+  TLogEntryProvider;

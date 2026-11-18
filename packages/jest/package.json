@@ -1,0 +1,27 @@
+{
+  "name": "@sigstore/jest",
+  "version": "0.0.0",
+  "private": "true",
+  "description": "Custom Jest matchers for Sigstore libraries",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clean": "shx rm -rf dist *.tsbuildinfo",
+    "build": "tsc --build"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "bdehamer@github.com",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sigstore/sigstore-js.git"
+  },
+  "dependencies": {
+    "@types/sigstore-jest-extended": "^0.0.0"
+  },
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  }
+}
